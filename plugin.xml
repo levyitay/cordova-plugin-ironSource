@@ -52,8 +52,8 @@
 
     <platform name="ios">
         <config-file target="config.xml" parent="/*">
-            <feature name="IronSourceAdsPlugin">
-                <param name="ios-package" value="IronSourceAdsPlugin" />
+            <feature name="IronSourcePlugin">
+                <param name="ios-package" value="IronSourcePlugin" />
             </feature>
         </config-file>
         <header-file src="src/ios/IronSourceAdsPlugin.h" />
