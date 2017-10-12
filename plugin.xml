@@ -3,8 +3,8 @@
     xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
     <name>cordova-plugin-ironsource</name>
     <description>Add support for ironSource ads in a Cordova app</description>
-    <js-module src="www/ironsourceads.js" name="IronSourceAds">
-        <clobbers target="IronSourceAds" />
+    <js-module src="www/ironsourceads.js" name="IronSource">
+        <clobbers target="IronSource" />
     </js-module>
 
     <engines>
