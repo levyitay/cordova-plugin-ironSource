@@ -1,4 +1,4 @@
-#import "SupersonicAdsPlugin.h"
+#import "IronSourcePlugin.h"
 
 static NSString *const EVENT_INTERSTITIAL_INITIALIZED = @"interstitialInitialized";
 static NSString *const EVENT_INTERSTITIAL_INIT_FAILED = @"interstitialInitializationFailed";
@@ -14,7 +14,7 @@ static NSString *const EVENT_OFFERWALL_CREDITED = @"offerwallCreditReceived";
 static NSString *const EVENT_OFFERWALL_SHOW_FAILED = @"offerwallShowFailed";
 static NSString *const EVENT_OFFERWALL_OPENED = @"offerwallOpened";
 static NSString *const EVENT_OFFERWALL_INIT_FAILED = @"offerwallInitializationFailed";
-static NSString *const EVENT_OFFERWALL_INITIALIZED = @"offerwallInitialized";
+static NSString *const EVENT_OFFERWALL_READY = @"offerwallReady";
 
 static NSString *const EVENT_REWARDED_VIDEO_FAILED = @"rewardedVideoFailed";
 static NSString *const EVENT_REWARDED_VIDEO_REWARDED = @"rewardedVideoRewardReceived";
@@ -26,14 +26,13 @@ static NSString *const EVENT_REWARDED_VIDEO_OPENED = @"rewardedVideoOpened";
 static NSString *const EVENT_REWARDED_VIDEO_INIT_FAILED = @"rewardedVideoInitializationFailed";
 static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitialized";
 
-@implementation SupersonicAdsPlugin
+@implementation IronSourceAdsPlugin
 
 
 #pragma mark - CDVPlugin
 
 - (void)pluginInitialize {
 
-    [Supersonic sharedInstance];
 }
 
 - (void)init:(CDVInvokedUrlCommand *)command {
@@ -43,50 +42,144 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
 
     //
     // Initialize 'Rewarded Video'
-    //
-    [[Supersonic sharedInstance] setRVDelegate:self];
-    [[Supersonic sharedInstance] initRVWithAppKey:appKey withUserId:userId];
+    
+    [IronSource setRewardedVideoDelegate:self];
+    [IronSource setOfferwallDelegate:self];
+    [IronSource setInterstitialDelegate:self];
 
-    //
-    // Initialize 'Interstitial'
-    //
-    [[Supersonic sharedInstance] setISDelegate:self];
-    [[Supersonic sharedInstance] initISWithAppKey:appKey withUserId:userId];
-
-    //
-    // Initialize 'Offerwall'
-    //
-    [[Supersonic sharedInstance] setOWDelegate:self];
-    [[Supersonic sharedInstance] initOWWithAppKey:appKey withUserId:userId];
+    [IronSource setUserId:userId];
+    [IronSource initWithAppKey:APPKEY];
+    
 
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
+- (void)validateIntegration:(CDVInvokedUrlCommand *)command{
+        [ISIntegrationHelper validateIntegration];
+        
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+
+}
+
+- (void)getRewardedVideoPlacementInfo:(CDVInvokedUrlCommand *)command{
+    NSString *placementName = [command argumentAtIndex:0];
+
+    
+    ISPlacementInfo *placement = [IronSource rewardedVideoPlacementInfo:placementName];
+    NSDictionary *data = @{
+            @"placement": @{
+                    @"name": placement.placementName,
+                    @"reward": placement.rewardName,
+                    @"amount": placement.rewardAmount
+            }
+    };
+    
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: data];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    
+
+}
+
+- (void)setDynamicUserId:(CDVInvokedUrlCommand *)command{
+    NSString *userId = [command argumentAtIndex:0];
+
+    [IronSource setUserId:userId];
+
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (void)isRewardedVideoPlacementCapped:(CDVInvokedUrlCommand *)command{
+    NSString *placementName = [command argumentAtIndex:0];
+
+    BOOL capped = [IronSource isRewardedVideoCappedForPlacement:placementName];
+
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool: capped];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+
+}
+- (void)isInterstitialReady:(CDVInvokedUrlCommand *)command{
+    BOOL ready = [IronSource hasInterstitial];
+
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool: ready];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (void)isInterstitialPlacementCapped:(CDVInvokedUrlCommand *)command{
+    NSString *placementName = [command argumentAtIndex:0];
+
+    BOOL capped = [IronSource isInterstitialCappedForPlacement:placementName];
+
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool: capped];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+
+}
+
+
+- (void)getInterstitialPlacementInfo:(CDVInvokedUrlCommand *)command{
+    
+    NSString *placementName = [command argumentAtIndex:0];
+
+    
+    ISPlacementInfo *placement = [IronSource rewardedVideoPlacementInfo:placementName];
+    NSDictionary *data = @{
+            @"placement": @{
+                    @"name": placement.placementName,
+                    @"reward": placement.rewardName,
+                    @"amount": placement.rewardAmount
+            }
+    };
+    
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsDictionary: data];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    
+    [self fireEvent:EVENT_REWARDED_VIDEO_REWARDED withData:data];
+
+}
+
 - (void)showRewardedAd:(CDVInvokedUrlCommand *)command {
 
     NSString *placementName = [command argumentAtIndex:0];
+    UIViewController *vc = [[[UIApplication sharedApplication] keyWindow] rootViewController]; 
 
     if (placementName == nil) {
-        [[Supersonic sharedInstance] showRV];
+        [IronSource showRewardedVideoWithViewController:vc];
     } else {
-        [[Supersonic sharedInstance] showRVWithPlacementName:placementName];
+        [IronSource showRewardedVideoWithViewController:vc placement:placementName]
     }
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 - (void)showInterstitial:(CDVInvokedUrlCommand *)command {
+    
+    NSString *placementName = [command argumentAtIndex:0];
+    UIViewController *vc = [[[UIApplication sharedApplication] keyWindow] rootViewController]; 
 
-    [[Supersonic sharedInstance] showIS];
+    if (placementName == nil) {
+        [IronSource showInterstitialWithViewController:self]
+    }else{
+        [IronSource showInterstitialWithViewController:self placement:placementName]
+
+    }
+    
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
 - (void)showOfferwall:(CDVInvokedUrlCommand *)command {
 
-    [[Supersonic sharedInstance] showOW];
+     [IronSource showOfferwallWithViewController:self];
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (void)loadInterstitial:(CDVInvokedUrlCommand *)command { 
+
+    [IronSource loadInterstitial];
+     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
 
@@ -105,50 +198,36 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
 
 }
 
-#pragma mark - SupersonicRVDelegate
+#pragma mark - ISRewardedVideoDelegate
 
-- (void)supersonicRVInitSuccess {
-    [self fireEvent: EVENT_REWARDED_VIDEO_INITIALIZED];
-}
 
-- (void)supersonicRVInitFailedWithError:(NSError *)error {
+
+- (void)rewardedVideoHasChangedAvailability:(BOOL)available {
 
     NSDictionary *data = @{
-            @"error": @{
-                    @"user" : @(error.code),
-                    @"message" : error.description
-            }
-    };
-
-    [self fireEvent:EVENT_REWARDED_VIDEO_INIT_FAILED withData: data];
-};
-
-- (void)supersonicRVAdAvailabilityChanged:(BOOL)hasAvailableAds {
-
-    NSDictionary *data = @{
-            @"available" : @(hasAvailableAds)
+            @"available" : @(available)
     };
     [self fireEvent:EVENT_REWARDED_VIDEO_AVAILABILITY_CHANGED withData:data];
 }
 
-- (void)supersonicRVAdOpened {
+- (void)rewardedVideoDidOpen {
 
     [self fireEvent:EVENT_REWARDED_VIDEO_OPENED];
 }
 
-- (void)supersonicRVAdStarted {
+- (void)rewardedVideoDidStart {
     [self fireEvent:EVENT_REWARDED_VIDEO_STARTED];
 }
 
-- (void)supersonicRVAdEnded {
+- (void)rewardedVideoDidEnd {
     [self fireEvent:EVENT_REWARDED_VIDEO_ENDED];
 }
 
-- (void)supersonicRVAdClosed {
+- (void)rewardedVideoDidClose {
     [self fireEvent:EVENT_REWARDED_VIDEO_CLOSED];
 }
 
-- (void)supersonicRVAdRewarded:(SupersonicPlacementInfo *)placementInfo {
+- (void)didReceiveRewardForPlacement:(ISPlacementInfo *)placementInfo {
 
     NSDictionary *data = @{
             @"placement": @{
@@ -160,7 +239,7 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
     [self fireEvent:EVENT_REWARDED_VIDEO_REWARDED withData:data];
 }
 
-- (void)supersonicRVAdFailedWithError:(NSError *)error {
+- (void)rewardedVideoDidFailToShowWithError:(NSError *)error {
 
     NSDictionary *data = @{
             @"error": @{
@@ -172,29 +251,15 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
     [self fireEvent:EVENT_REWARDED_VIDEO_FAILED withData: data];
 }
 
-- (void)supersonicISInitSuccess {
-
-    [self fireEvent:EVENT_INTERSTITIAL_INITIALIZED];
+- (void)interstitialDidOpen {
 }
 
-- (void)supersonicISInitFailedWithError:(NSError *)error {
-
-    NSDictionary *data = @{
-            @"error": @{
-                    @"user" : @(error.code),
-                    @"message" : error.description
-            }
-    };
-
-    [self fireEvent:EVENT_INTERSTITIAL_INIT_FAILED withData: data];
-}
-
-- (void)supersonicISShowSuccess {
+- (void)interstitialDidShow {
 
     [self fireEvent:EVENT_INTERSTITIAL_SHOWN];
 }
 
-- (void)supersonicISShowFailWithError:(NSError *)error {
+- (void)interstitialDidFailToLoadWithError:(NSError *)error {
 
     NSDictionary *data = @{
             @"error": @{
@@ -203,50 +268,42 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
             }
     };
 
-    [self fireEvent:EVENT_INTERSTITIAL_SHOW_FAILED withData: data];
+    [self fireEvent:EVENT_INTERSTITIAL_LOAD_FAILED withData: data];
 }
 
-- (void)supersonicISAdAvailable:(BOOL)available {
 
-    NSDictionary *data = @{
-            @"available": @(available)
-    };
-    [self fireEvent:EVENT_INTERSTITIAL_AVAILABILITY_CHANGED withData:data];
+- (void)interstitialDidLoad {
+
+    [self fireEvent:EVENT_INTERSTITIAL_LOADED];
 }
 
-- (void)supersonicISAdClicked {
-
+- (void)didClickInterstitial {
     [self fireEvent:EVENT_INTERSTITIAL_CLICKED];
 }
 
-- (void)supersonicISAdClosed {
+
+- (void)interstitialDidClose {
 
     [self fireEvent:EVENT_INTERSTITIAL_CLOSED];
 }
 
-- (void)supersonicOWInitSuccess {
 
-    [self fireEvent:EVENT_OFFERWALL_INITIALIZED];
+- (void)offerwallHasChangedAvailability:(BOOL)available {
+        NSDictionary *data = @{
+            @"available" : @(available)
+        };
+       [self fireEvent:EVENT_OFFERWALL_READY withData:data ];
+
 }
 
-- (void)supersonicOWShowSuccess {
+- (void)offerwallDidShow {
 
     [self fireEvent:EVENT_OFFERWALL_OPENED];
 }
 
-- (void)supersonicOWInitFailedWithError:(NSError *)error {
 
-    NSDictionary *data = @{
-            @"error": @{
-                    @"user" : @(error.code),
-                    @"message" : error.description
-            }
-    };
 
-    [self fireEvent:EVENT_OFFERWALL_INIT_FAILED withData: data];
-}
-
-- (void)supersonicOWShowFailedWithError:(NSError *)error {
+- (void)offerwallDidFailToShowWithError:(NSError *)error {
 
     NSDictionary *data = @{
             @"error": @{
@@ -258,12 +315,12 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
     [self fireEvent:EVENT_OFFERWALL_SHOW_FAILED withData: data];
 }
 
-- (void)supersonicOWAdClosed {
+- (void)offerwallDidClose {
 
     [self fireEvent:EVENT_OFFERWALL_CLOSED];
 }
 
-- (BOOL)supersonicOWDidReceiveCredit:(NSDictionary *)creditInfo {
+- (BOOL)didReceiveOfferwallCredits:(NSDictionary *)creditInfo {
 
     NSDictionary *data = @{
             @"credit": @{
@@ -276,7 +333,7 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
     return YES;
 }
 
-- (void)supersonicOWFailGettingCreditWithError:(NSError *)error {
+- (void)didFailToReceiveOfferwallCreditsWithError:(NSError *)error {
 
     NSDictionary *data = @{
             @"error": @{
