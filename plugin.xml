@@ -56,8 +56,8 @@
                 <param name="ios-package" value="IronSourcePlugin" />
             </feature>
         </config-file>
-        <header-file src="src/ios/IronSourceAdsPlugin.h" />
-        <source-file src="src/ios/IronSourceAdsPlugin.m" />
+        <header-file src="src/ios/IronSourcePlugin.h" />
+        <source-file src="src/ios/IronSourcePlugin.m" />
         <framework src="src/ios/IronSource.framework" custom="true" />
         <framework src="Foundation.framework" />
         <framework src="AVFoundation.framework" />

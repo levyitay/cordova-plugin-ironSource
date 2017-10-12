@@ -4,7 +4,7 @@
   "description": "Ads support for ironSource ads to Cordova and Phonegap apps",
   "repository": {
     "type": "git",
-    "url": "https://github.com/Dexus/cordova-plugin-ironSource.git"
+    "url": "https://github.com/levyitay/cordova-plugin-ironSource.git"
   },
   "keywords": [
     "ecosystem:cordova",
@@ -14,7 +14,7 @@
   "author": "Josef \"Dexus\" Fröhle",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/Dexus/cordova-plugin-ironSource/issues"
+    "url": "https://github.com/levyitay/cordova-plugin-ironSource/issues"
   },
-  "homepage": "https://github.com/Dexus/cordova-plugin-ironSource"
+  "homepage": "https://github.com/levyitay/cordova-plugin-ironSource"
 }
