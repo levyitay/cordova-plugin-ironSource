@@ -58,7 +58,7 @@
         </config-file>
         <header-file src="src/ios/IronSourcePlugin.h" />
         <source-file src="src/ios/IronSourcePlugin.m" />
-        <framework src="src/ios/IronSource.framework" custom="true" embed="false"/>
+        <framework src="src/ios/IronSource.framework" custom="true" framework="true"/>
         <framework src="Foundation.framework" />
         <framework src="AVFoundation.framework" />
         <framework src="CoreMedia.framework" />
