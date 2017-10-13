@@ -1,8 +1,7 @@
 #import "IronSourcePlugin.h"
 
-static NSString *const EVENT_INTERSTITIAL_INITIALIZED = @"interstitialInitialized";
-static NSString *const EVENT_INTERSTITIAL_INIT_FAILED = @"interstitialInitializationFailed";
-static NSString *const EVENT_INTERSTITIAL_AVAILABILITY_CHANGED = @"interstitialAvailabilityChanged";
+static NSString *const EVENT_INTERSTITIAL_LOADED = @"interstitialLoaded";
+static NSString *const EVENT_INTERSTITIAL_LOAD_FAILED = @"interstitialLoadFailed";
 static NSString *const EVENT_INTERSTITIAL_SHOWN = @"interstitialShown";
 static NSString *const EVENT_INTERSTITIAL_SHOW_FAILED = @"interstitialShowFailed";
 static NSString *const EVENT_INTERSTITIAL_CLICKED = @"interstitialClicked";
@@ -13,7 +12,6 @@ static NSString *const EVENT_OFFERWALL_CREDIT_FAILED = @"offerwallCreditFailed";
 static NSString *const EVENT_OFFERWALL_CREDITED = @"offerwallCreditReceived";
 static NSString *const EVENT_OFFERWALL_SHOW_FAILED = @"offerwallShowFailed";
 static NSString *const EVENT_OFFERWALL_OPENED = @"offerwallOpened";
-static NSString *const EVENT_OFFERWALL_INIT_FAILED = @"offerwallInitializationFailed";
 static NSString *const EVENT_OFFERWALL_READY = @"offerwallReady";
 
 static NSString *const EVENT_REWARDED_VIDEO_FAILED = @"rewardedVideoFailed";
@@ -23,8 +21,7 @@ static NSString *const EVENT_REWARDED_VIDEO_STARTED = @"rewardedVideoStarted";
 static NSString *const EVENT_REWARDED_VIDEO_AVAILABILITY_CHANGED = @"rewardedVideoAvailabilityChanged";
 static NSString *const EVENT_REWARDED_VIDEO_CLOSED = @"rewardedVideoClosed";
 static NSString *const EVENT_REWARDED_VIDEO_OPENED = @"rewardedVideoOpened";
-static NSString *const EVENT_REWARDED_VIDEO_INIT_FAILED = @"rewardedVideoInitializationFailed";
-static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitialized";
+
 
 @implementation IronSourceAdsPlugin
 
@@ -48,8 +45,8 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
     [IronSource setInterstitialDelegate:self];
 
     [IronSource setUserId:userId];
-    [IronSource initWithAppKey:APPKEY];
-    
+    [IronSource initWithAppKey:appKey];
+
 
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
@@ -81,6 +78,11 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
     
 
 }
+    
+    - (void)isRewardedVideoAvailable:(CDVInvokedUrlCommand *)command{
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:[IronSource hasRewardedVideo]];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+    }
 
 - (void)setDynamicUserId:(CDVInvokedUrlCommand *)command{
     NSString *userId = [command argumentAtIndex:0];
@@ -147,7 +149,7 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
     if (placementName == nil) {
         [IronSource showRewardedVideoWithViewController:vc];
     } else {
-        [IronSource showRewardedVideoWithViewController:vc placement:placementName]
+        [IronSource showRewardedVideoWithViewController:vc placement:placementName];
     }
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
@@ -159,9 +161,9 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
     UIViewController *vc = [[[UIApplication sharedApplication] keyWindow] rootViewController]; 
 
     if (placementName == nil) {
-        [IronSource showInterstitialWithViewController:self]
+        [IronSource showInterstitialWithViewController:vc];
     }else{
-        [IronSource showInterstitialWithViewController:self placement:placementName]
+        [IronSource showInterstitialWithViewController:vc placement:placementName];
 
     }
     
@@ -170,8 +172,9 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
 }
 
 - (void)showOfferwall:(CDVInvokedUrlCommand *)command {
+    UIViewController *vc = [[[UIApplication sharedApplication] keyWindow] rootViewController];
 
-     [IronSource showOfferwallWithViewController:self];
+     [IronSource showOfferwallWithViewController:vc];
     CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
     [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
 }
@@ -194,6 +197,7 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
 
     NSString *jsonString = [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
     NSString *js = [NSString stringWithFormat:@"cordova.fireWindowEvent('%@', %@)", event, jsonString];
+    NSLog(@"firing %@:",js);
     [self.commandDelegate evalJs:js];
 
 }
@@ -259,6 +263,17 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
     [self fireEvent:EVENT_INTERSTITIAL_SHOWN];
 }
 
+- (void)interstitialDidFailToShowWithError:(NSError *)error {
+    NSDictionary *data = @{
+                           @"error": @{
+                                   @"user" : @(error.code),
+                                   @"message" : error.description
+                                   }
+                           };
+    
+    [self fireEvent:EVENT_INTERSTITIAL_SHOW_FAILED withData: data];
+}
+
 - (void)interstitialDidFailToLoadWithError:(NSError *)error {
 
     NSDictionary *data = @{
@@ -289,10 +304,10 @@ static NSString *const EVENT_REWARDED_VIDEO_INITIALIZED = @"rewardedVideoInitial
 
 
 - (void)offerwallHasChangedAvailability:(BOOL)available {
-        NSDictionary *data = @{
-            @"available" : @(available)
-        };
-       [self fireEvent:EVENT_OFFERWALL_READY withData:data ];
+    NSDictionary *data = @{
+        @"available" : @(available)
+    };
+   [self fireEvent:EVENT_OFFERWALL_READY withData:data ];
 
 }
 

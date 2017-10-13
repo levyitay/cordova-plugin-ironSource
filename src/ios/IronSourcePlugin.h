@@ -9,6 +9,8 @@
 - (void)showRewardedAd:(CDVInvokedUrlCommand *)command;
 
 - (void)isRewardedVideoPlacementCapped:(CDVInvokedUrlCommand *)command;
+    
+- (void)isRewardedVideoAvailable:(CDVInvokedUrlCommand *)command;
 
 - (void)showInterstitial:(CDVInvokedUrlCommand *)command;
 
@@ -26,7 +28,6 @@
 
 - (void)setDynamicUserId:(CDVInvokedUrlCommand *)command;
 
-- (void)validateIntegration:(CDVInvokedUrlCommand *)command;
 
 
 
