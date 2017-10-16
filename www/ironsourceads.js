@@ -1,7 +1,8 @@
+var exec = require("cordova/exec");
 function IronSourceAds(appKey, userId, successCallback) {
     exec(successCallback, null, 'IronSourceAdsPlugin', 'init', [appKey, userId]);
    
-    this.showRewardedVideo = function(placementName, successCallback, failureCallback) {           
+    this.showRewardedVideo = function(placementName, successCallback, failureCallback) {
         exec(successCallback, null, 'IronSourceAdsPlugin', 'showRewardedAd', [placementName]);
     };
     this.getRewardedVideoPlacementInfo = function(placementName, successCallback, failureCallback) {
@@ -9,6 +10,9 @@ function IronSourceAds(appKey, userId, successCallback) {
     };
     this.isRewardedVideoPlacementCapped = function(placementName, successCallback, failureCallback) {
         exec(successCallback, failureCallback, 'IronSourceAdsPlugin', 'isRewardedVideoPlacementCapped', [placementName]);
+    };
+    this.isRewardedVideoReady = function(successCallback, failureCallback) {
+       exec(successCallback, failureCallback, 'IronSourceAdsPlugin', 'isRewardedVideoAvailable', []);
     };
     this.validateIntegration = function(successCallback, failureCallback) {
         exec(successCallback, failureCallback, 'IronSourceAdsPlugin', 'validateIntegration', []);

@@ -234,11 +234,9 @@ static NSString *const EVENT_REWARDED_VIDEO_OPENED = @"rewardedVideoOpened";
 - (void)didReceiveRewardForPlacement:(ISPlacementInfo *)placementInfo {
 
     NSDictionary *data = @{
-            @"placement": @{
-                    @"name": placementInfo.placementName,
-                    @"reward": placementInfo.rewardName,
-                    @"amount": placementInfo.rewardAmount
-            }
+                    @"placementName": placementInfo.placementName,
+                    @"rewardName": placementInfo.rewardName,
+                    @"rewardAmount": placementInfo.rewardAmount
     };
     [self fireEvent:EVENT_REWARDED_VIDEO_REWARDED withData:data];
 }
@@ -246,10 +244,10 @@ static NSString *const EVENT_REWARDED_VIDEO_OPENED = @"rewardedVideoOpened";
 - (void)rewardedVideoDidFailToShowWithError:(NSError *)error {
 
     NSDictionary *data = @{
-            @"error": @{
-                    @"user" : @(error.code),
-                    @"message" : error.description
-            }
+           
+                    @"errorCode" : @(error.code),
+                    @"errorMessage" : error.description
+            
     };
 
     [self fireEvent:EVENT_REWARDED_VIDEO_FAILED withData: data];
@@ -265,11 +263,11 @@ static NSString *const EVENT_REWARDED_VIDEO_OPENED = @"rewardedVideoOpened";
 
 - (void)interstitialDidFailToShowWithError:(NSError *)error {
     NSDictionary *data = @{
-                           @"error": @{
-                                   @"user" : @(error.code),
-                                   @"message" : error.description
-                                   }
-                           };
+                         
+       @"errorCode" : @(error.code),
+       @"errorMessage" : error.description
+       }
+                           
     
     [self fireEvent:EVENT_INTERSTITIAL_SHOW_FAILED withData: data];
 }
@@ -277,10 +275,10 @@ static NSString *const EVENT_REWARDED_VIDEO_OPENED = @"rewardedVideoOpened";
 - (void)interstitialDidFailToLoadWithError:(NSError *)error {
 
     NSDictionary *data = @{
-            @"error": @{
-                    @"user" : @(error.code),
-                    @"message" : error.description
-            }
+            
+                    @"errorCode" : @(error.code),
+                    @"errorMessage" : error.description
+           
     };
 
     [self fireEvent:EVENT_INTERSTITIAL_LOAD_FAILED withData: data];
@@ -321,10 +319,10 @@ static NSString *const EVENT_REWARDED_VIDEO_OPENED = @"rewardedVideoOpened";
 - (void)offerwallDidFailToShowWithError:(NSError *)error {
 
     NSDictionary *data = @{
-            @"error": @{
-                    @"user" : @(error.code),
-                    @"message" : error.description
-            }
+           
+                    @"errorCode" : @(error.code),
+                    @"errorMessage" : error.description
+            
     };
 
     [self fireEvent:EVENT_OFFERWALL_SHOW_FAILED withData: data];
@@ -338,11 +336,11 @@ static NSString *const EVENT_REWARDED_VIDEO_OPENED = @"rewardedVideoOpened";
 - (BOOL)didReceiveOfferwallCredits:(NSDictionary *)creditInfo {
 
     NSDictionary *data = @{
-            @"credit": @{
-                    @"amount": creditInfo[@"credits"],
-                    @"total": creditInfo[@"totalCredits"],
-                    @"estimate": creditInfo[@"totalCreditsFlag"]
-            }
+           
+                    @"credits": creditInfo[@"credits"],
+                    @"totalCredits": creditInfo[@"totalCredits"],
+                    @"totalCreditsFlag": creditInfo[@"totalCreditsFlag"]
+           
     };
     [self fireEvent:EVENT_OFFERWALL_CREDITED withData:data];
     return YES;
@@ -351,10 +349,10 @@ static NSString *const EVENT_REWARDED_VIDEO_OPENED = @"rewardedVideoOpened";
 - (void)didFailToReceiveOfferwallCreditsWithError:(NSError *)error {
 
     NSDictionary *data = @{
-            @"error": @{
-                    @"user" : @(error.code),
-                    @"message" : error.description
-            }
+           
+                    @"errorCode" : @(error.code),
+                    @"errorMessage" : error.description
+      
     };
 
     [self fireEvent:EVENT_OFFERWALL_CREDIT_FAILED withData: data];

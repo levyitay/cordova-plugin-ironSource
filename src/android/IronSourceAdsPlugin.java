@@ -6,6 +6,7 @@ import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.PluginResult;
 import org.json.JSONObject;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -21,6 +22,30 @@ import com.ironsource.mediationsdk.sdk.OfferwallListener;
 import com.ironsource.mediationsdk.sdk.RewardedVideoListener;
 
 public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoListener, OfferwallListener, InterstitialListener {
+    private static final String EVENT_INTERSTITIAL_LOADED = "interstitialLoaded";
+    private static final String EVENT_INTERSTITIAL_LOAD_FAILED = "interstitialLoadFailed";
+    private static final String EVENT_INTERSTITIAL_SHOWN = "interstitialShown";
+    private static final String EVENT_INTERSTITIAL_SHOW_FAILED = "interstitialShowFailed";
+    private static final String EVENT_INTERSTITIAL_CLICKED = "interstitialClicked";
+    private static final String EVENT_INTERSTITIAL_CLOSED = "interstitialClosed";
+
+    private static final String EVENT_OFFERWALL_CLOSED = "offerwallClosed";
+    private static final String EVENT_OFFERWALL_CREDIT_FAILED = "offerwallCreditFailed";
+    private static final String EVENT_OFFERWALL_CREDITED = "offerwallCreditReceived";
+    private static final String EVENT_OFFERWALL_SHOW_FAILED = "offerwallShowFailed";
+    private static final String EVENT_OFFERWALL_OPENED = "offerwallOpened";
+    private static final String EVENT_OFFERWALL_READY = "offerwallReady";
+
+    private static final String EVENT_REWARDED_VIDEO_FAILED = "rewardedVideoFailed";
+    private static final String EVENT_REWARDED_VIDEO_REWARDED = "rewardedVideoRewardReceived";
+    private static final String EVENT_REWARDED_VIDEO_ENDED = "rewardedVideoEnded";
+    private static final String EVENT_REWARDED_VIDEO_STARTED = "rewardedVideoStarted";
+    private static final String EVENT_REWARDED_VIDEO_AVAILABILITY_CHANGED = "rewardedVideoAvailabilityChanged";
+    private static final String EVENT_REWARDED_VIDEO_CLOSED = "rewardedVideoClosed";
+    private static final String EVENT_REWARDED_VIDEO_OPENED = "rewardedVideoOpened";
+
+
+
     private static final String TAG = "[IronSourceAdsPlugin]";
 
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
@@ -57,7 +82,7 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
                 }
             });
             return true;
-        } else if(action.equals("showRewardedVideo")) {
+        } else if(action.equals("showRewardedAd")) {
             String placementName = "DefaultRewardedVideo";
             if (args.length() == 1) {
                 placementName = args.getString(0);
@@ -75,6 +100,10 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
                 placementName = args.getString(0);
             }
             return this.isRewardedVideoPlacementCapped(placementName, callbackContext);
+        }else if (action.equals("isRewardedVideoAvailable")){
+
+            return this.isRewardedVideoAvailable(callbackContext);
+
         } else if(action.equals("setDynamicUserId")) {
             String userId = args.getString(0);
             return this.setDynamicUserId(userId);
@@ -104,8 +133,20 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
                 placementName = args.getString(0);
             }
             return this.showOfferwall(placementName);
+        }else if(action.equals("isInterstitialPlacementCapped")){
+            String placementName = "DefaultRewardedVideo";
+            if (args.length() == 1) {
+                placementName = args.getString(0);
+            }
+            return this.isInterstitialPlacementCapped(placementName, callbackContext);
         }
         return false;
+    }
+
+    private boolean isRewardedVideoAvailable(CallbackContext callbackContext) {
+        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, IronSource.isRewardedVideoAvailable()));
+
+        return true;
     }
 
     private void fireEvent(final String event) {
@@ -148,6 +189,7 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
         if (placement != null) {
             JSONObject event = new JSONObject();
             try {
+                event.put("placementName", placement.getPlacementName());
                 event.put("rewardName", placement.getRewardName());
                 event.put("rewardAmount", placement.getRewardAmount());
             } catch (JSONException e) {
@@ -163,12 +205,8 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
 
     private boolean isRewardedVideoPlacementCapped(String placementName, CallbackContext callbackContext) {
         boolean isCapped = IronSource.isRewardedVideoPlacementCapped(placementName);
-        if (isCapped) {
-            callbackContext.error("capped");
-        }
-        else {
-            callbackContext.success("ok");
-        }
+        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, isCapped));
+
         return true;
     }
 
@@ -184,12 +222,8 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
 
     private boolean isInterstitialReady(CallbackContext callbackContext) {
         boolean isReady = IronSource.isInterstitialReady();
-        if (isReady) {
-            callbackContext.success("ready");
-        }
-        else {
-            callbackContext.error("not_ready");
-        }
+        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, isReady));
+
         return true;
     }
 
@@ -198,6 +232,7 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
         if (placement != null) {
             JSONObject event = new JSONObject();
             try {
+
                 event.put("placementName", placement.getPlacementName());
                 event.put("placementId", placement.getPlacementId());
             } catch (JSONException e) {
@@ -211,6 +246,13 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
         return true;
     }
 
+    private boolean isInterstitialPlacementCapped(String placementName, CallbackContext callbackContext){
+        boolean isCapped = IronSource.isInterstitialPlacementCapped(placementName);
+        callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, isCapped));
+
+
+        return true;
+    }
 
     private boolean showInterstitial(String placementName) {
         IronSource.showInterstitial(placementName);
@@ -225,32 +267,32 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
     // --------- IronSource Rewarded Video Listener ---------
     @Override
     public void onRewardedVideoAdOpened() {
-        this.fireEvent("onRewardedVideoAdOpened");
+        this.fireEvent(EVENT_REWARDED_VIDEO_OPENED);
     }
 
     @Override
     public void onRewardedVideoAdClosed() {
-        this.fireEvent("onRewardedVideoAdClosed");
+        this.fireEvent(EVENT_REWARDED_VIDEO_CLOSED);
     }
 
     @Override
     public void onRewardedVideoAvailabilityChanged(boolean b) {
         final JSONObject data = new JSONObject();
         try {
-            data.put("videoAvailable", b);
+            data.put("available", b);
         } catch (JSONException e) {
         }
-        this.fireEvent("onRewardedVideoAvailabilityChanged", data);
+        this.fireEvent(EVENT_REWARDED_VIDEO_AVAILABILITY_CHANGED, data);
     }
 
     @Override
     public void onRewardedVideoAdStarted() {
-        this.fireEvent("onRewardedVideoAdStarted");
+        this.fireEvent(EVENT_REWARDED_VIDEO_STARTED);
     }
 
     @Override
     public void onRewardedVideoAdEnded() {
-        this.fireEvent("onRewardedVideoAdEnded");
+        this.fireEvent(EVENT_REWARDED_VIDEO_ENDED);
     }
 
     @Override
@@ -262,7 +304,7 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
             data.put("rewardAmount", placement.getRewardAmount());
         } catch (JSONException e) {
         }
-        this.fireEvent("onRewardedVideoAdRewarded", data);
+        this.fireEvent(EVENT_REWARDED_VIDEO_REWARDED, data);
     }
 
     @Override
@@ -273,7 +315,7 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
             data.put("errorMessage", ironSourceError.getErrorMessage());
         } catch (JSONException e) {
         }
-        this.fireEvent("onRewardedVideoAdShowFailed", data);
+        this.fireEvent(EVENT_REWARDED_VIDEO_FAILED, data);
     }
 
     // --------- IronSource Offerwall Listener ---------
@@ -283,26 +325,25 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
     public void onOfferwallAvailable(boolean b) {
         final JSONObject data = new JSONObject();
         try {
-            data.put("offerAvailable", b);
+            data.put("available", b);
         } catch (JSONException e) {
         }
-        this.fireEvent("onOfferwallAvailable", data);
+        this.fireEvent(EVENT_OFFERWALL_READY, data);
     }
 
     @Override
     public void onOfferwallOpened() {
-        this.fireEvent("onOfferwallOpened");
+        this.fireEvent(EVENT_OFFERWALL_OPENED);
     }
 
     @Override
     public void onOfferwallShowFailed(IronSourceError ironSourceError) {
         final JSONObject data = new JSONObject();
-        try {
-            data.put("errorCode", ironSourceError.getErrorCode());
-            data.put("errorMessage", ironSourceError.getErrorMessage());
-        } catch (JSONException e) {
-        }
-        this.fireEvent("onOfferwallShowFailed", data);
+            try {
+                data.put("errorCode", ironSourceError.getErrorCode());
+                data.put("errorMessage", ironSourceError.getErrorMessage());
+            } catch (JSONException e) {}
+        this.fireEvent(EVENT_OFFERWALL_SHOW_FAILED, data);
     }
 
     @Override
@@ -314,7 +355,7 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
             data.put("totalCreditsFlag", totalCreditsFlag);
         } catch (JSONException e) {
         }
-        this.fireEvent("onOfferwallAdCredited", data);
+        this.fireEvent(EVENT_OFFERWALL_CREDITED, data);
         return false;
     }
 
@@ -326,12 +367,12 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
             data.put("errorMessage", ironSourceError.getErrorMessage());
         } catch (JSONException e) {
         }
-        this.fireEvent("onGetOfferwallCreditsFailed", data);
+        this.fireEvent(EVENT_OFFERWALL_CREDIT_FAILED, data);
     }
 
     @Override
     public void onOfferwallClosed() {
-        this.fireEvent("onOfferwallClosed");
+        this.fireEvent(EVENT_OFFERWALL_CLOSED);
     }
 
     // --------- IronSource Interstitial Listener ---------
@@ -339,7 +380,7 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
 
     @Override
     public void onInterstitialAdReady() {
-        this.fireEvent("onInterstitialAdReady");
+        this.fireEvent(EVENT_INTERSTITIAL_LOADED);
     }
 
     @Override
@@ -350,22 +391,22 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
             data.put("errorMessage", ironSourceError.getErrorMessage());
         } catch (JSONException e) {
         }
-        this.fireEvent("onInterstitialAdLoadFailed", data);
+        this.fireEvent(EVENT_INTERSTITIAL_LOAD_FAILED, data);
     }
 
     @Override
     public void onInterstitialAdOpened() {
-        this.fireEvent("onInterstitialAdOpened");
+
     }
 
     @Override
     public void onInterstitialAdClosed() {
-        this.fireEvent("onInterstitialAdClosed");
+        this.fireEvent(EVENT_INTERSTITIAL_CLOSED);
     }
 
     @Override
     public void onInterstitialAdShowSucceeded() {
-        this.fireEvent("onInterstitialAdShowSucceeded");
+        this.fireEvent(EVENT_INTERSTITIAL_SHOWN);
     }
 
     @Override
@@ -376,12 +417,12 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
             data.put("errorMessage", ironSourceError.getErrorMessage());
         } catch (JSONException e) {
         }
-        this.fireEvent("onInterstitialAdShowFailed", data);
+        this.fireEvent(EVENT_INTERSTITIAL_SHOW_FAILED, data);
     }
 
     @Override
     public void onInterstitialAdClicked() {
-        this.fireEvent("onInterstitialAdClicked");
+        this.fireEvent(EVENT_INTERSTITIAL_CLICKED);
     }
 
 }
