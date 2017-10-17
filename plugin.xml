@@ -51,6 +51,7 @@
     </platform>
 
     <platform name="ios">
+        <framework src="IronSourceSDK" type="podspec" spec="~> 6.6.8.1" />
         <config-file target="config.xml" parent="/*">
             <feature name="IronSourcePlugin">
                 <param name="ios-package" value="IronSourcePlugin" />
@@ -58,7 +59,6 @@
         </config-file>
         <header-file src="src/ios/IronSourcePlugin.h" />
         <source-file src="src/ios/IronSourcePlugin.m" />
-        <framework src="src/ios/IronSource.framework" custom="true" framework="true"/>
         <framework src="Foundation.framework" />
         <framework src="AVFoundation.framework" />
         <framework src="CoreMedia.framework" />
