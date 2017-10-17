@@ -266,7 +266,7 @@ static NSString *const EVENT_REWARDED_VIDEO_OPENED = @"rewardedVideoOpened";
                          
        @"errorCode" : @(error.code),
        @"errorMessage" : error.description
-       }
+       };
                            
     
     [self fireEvent:EVENT_INTERSTITIAL_SHOW_FAILED withData: data];
