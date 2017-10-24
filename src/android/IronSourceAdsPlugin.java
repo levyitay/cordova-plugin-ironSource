@@ -139,6 +139,10 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
                 placementName = args.getString(0);
             }
             return this.isInterstitialPlacementCapped(placementName, callbackContext);
+        }else if(action.equals("onResume")){
+            return this.onActivityResumeCordova(callbackContext);
+        }else if(action.equals("onPause")){
+            return this.onActivityPauseCordova(callbackContext);
         }
         return false;
     }
@@ -254,6 +258,7 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
         return true;
     }
 
+
     private boolean showInterstitial(String placementName) {
         IronSource.showInterstitial(placementName);
         return true;
@@ -261,6 +266,17 @@ public class IronSourceAdsPlugin extends CordovaPlugin implements RewardedVideoL
 
     private boolean showOfferwall(String placementName) {
         IronSource.showOfferwall(placementName);
+        return true;
+    }
+
+
+    private boolean onActivityResumeCordova(CallbackContext callbackContext){
+        IronSource.onResume(this.cordova.getActivity());
+        return true;
+    }
+
+    private boolean onActivityPauseCordova(CallbackContext callbackContext){
+        IronSource.onPause(this.cordova.getActivity());
         return true;
     }
 

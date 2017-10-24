@@ -35,9 +35,12 @@ function IronSourceAds(appKey, userId, successCallback) {
     this.showOfferwall = function(placementName) {
         exec(null, null, 'IronSourceAdsPlugin', 'showOfferwall', [placementName]);
     };
-    this.subscribeOnNotifications = function(successCallback) {
-        exec(successCallback, null, 'IronSourceAdsPlugin', 'subscribeOnNotifications', []);
-    };
+    document.addEventListener("pause", function() {
+        exec(successCallback, failureCallback, 'IronSourceAdsPlugin', 'onActivityPauseCordova', []);
+    }, false);
+    document.addEventListener("resume", function(){
+        exec(successCallback, failureCallback, 'IronSourceAdsPlugin', 'onActivityResumeCordova', []);
+    }, false);
   
 
 }
